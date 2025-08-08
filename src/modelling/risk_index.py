@@ -1,4 +1,7 @@
 import xarray as xr
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
 from src.config import DATA_DIR
 
 def compute():

@@ -1,5 +1,8 @@
 import streamlit as st, xarray as xr, geopandas as gpd, pandas as pd
 import leafmap.foliumap as leafmap
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
 from src.config import DATA_DIR, REGION_SHAPE
 
 st.set_page_config(page_title="EA Climate-Risk", layout="wide")

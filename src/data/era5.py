@@ -27,3 +27,8 @@ def download(years=range(2001, 2026), variables=("total_precipitation",
             fn = DATA_DIR / f"era5_{var}_{yr}.nc"
             if not fn.exists():
                 _request(var, yr, str(fn))
+
+
+if __name__ == "__main__":                      
+    download(years=[2020])
+    print("🎉 ERA5 download task(s) submitted. Check data folder.")

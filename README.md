@@ -2,6 +2,13 @@
 
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/)
 
+[![Live Demo](https://img.shields.io/badge/Streamlit-App-red?logo=streamlit)](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/)
+
+## 🚀 Live Demo
+[Open the dashboard on Streamlit »](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/)
+
+<!-- Optional: add a screenshot to assets/readme_preview.png -->
+<!-- ![Dashboard preview](assets/readme_preview.png) -->
 
 ### Command-line workflow
 python -m src.data.era5         

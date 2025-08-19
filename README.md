@@ -1,6 +1,6 @@
 # Tracking drought risk across East Africa
 
-[![Live Demo](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/)
+[![Live Demo](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/)](https://github.com/sophia14324/tracking-drought-risk-across-east-africa/blob/main/src/dashboard/app.py)
 
 ### Command-line workflow
 python -m src.data.era5         # downloads ERA5-Land netCDF

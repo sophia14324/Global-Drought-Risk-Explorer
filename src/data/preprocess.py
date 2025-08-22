@@ -1,6 +1,6 @@
 # src/data/preprocess.py
 """
-Build admin-level monthly indicators (CSV -> tidy table) with a composite risk index.
+An admin-level monthly indicators (CSV -> tidy table) with a composite risk index.
 Inputs: 3 small CSVs exported from Earth Engine to data/gee_monthly/
 Outputs: data/admin_monthly_indicators.parquet  (and CSV)
 
@@ -70,22 +70,18 @@ def _monthly_zscore(df: pd.DataFrame, value_col: str) -> pd.DataFrame:
 def build_indicators():
     _require_files([NDVI_CSV, CHIRPS_CSV, SMAP_CSV])
 
-    # 1) Load variables
     ndvi = _read_csv(NDVI_CSV,   "ndvi")
     rain = _read_csv(CHIRPS_CSV, "rain_mm")
     rzsm = _read_csv(SMAP_CSV,   "rzsm")  # may contain nulls pre-2015-04
 
-    # 2) Z-scores per region-month
     ndvi_z = _monthly_zscore(ndvi, "ndvi")
     rain_z = _monthly_zscore(rain, "rain_mm")
     rzsm_z = _monthly_zscore(rzsm, "rzsm")
 
-    # 3) Direction-of-risk
     ndvi_z["ndvi_stress"]  = -ndvi_z["z"]
     rain_z["rain_deficit"] = -rain_z["z"]
     rzsm_z["soil_dryness"] = -rzsm_z["z"]
 
-    # 4) Merge to tidy table
     keys = ["ADM0_NAME", "ADM1_NAME", "date"]
     df = (ndvi_z[keys + ["ndvi_stress"]]
           .merge(rain_z[keys + ["rain_deficit"]], on=keys, how="outer")
@@ -93,14 +89,12 @@ def build_indicators():
           .sort_values(keys)
           .reset_index(drop=True))
 
-    # 5) Composite + smoothing
     df["risk_index"] = df[["ndvi_stress", "rain_deficit", "soil_dryness"]].mean(axis=1, skipna=True)
     df["risk_index_sm3"] = (df
         .groupby(["ADM0_NAME","ADM1_NAME"])["risk_index"]
         .transform(lambda s: s.rolling(3, min_periods=1).mean())
     )
 
-    # 6) Save
     out_parquet = DATA_DIR / "admin_monthly_indicators.parquet"
     out_csv     = DATA_DIR / "admin_monthly_indicators.csv"
     df.to_parquet(out_parquet, index=False)

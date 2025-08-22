@@ -1,5 +1,3 @@
-# Global Drought Risk Explorer — Tableau-style dashboard
-# Standalone Streamlit app (no src.* imports)
 from __future__ import annotations
 
 import json
@@ -12,9 +10,7 @@ import streamlit as st
 import altair as alt
 import pydeck as pdk
 
-# -----------------------------
-# Paths (repo layout expected)
-# -----------------------------
+
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data"
 ASSETS_DIR = ROOT / "assets"
@@ -27,20 +23,17 @@ NDVI_CSV = CSV_DIR / "EA_admin1_monthly_NDVI.csv"
 RAIN_CSV = CSV_DIR / "EA_admin1_monthly_CHIRPS.csv"
 SMAP_CSV = CSV_DIR / "EA_admin1_monthly_SMAP_RZSM.csv"
 
-WORLD_GJ = ASSETS_DIR / "world_admin0.geojson"           # Prefer global
-EA_ADMIN1_GJ = ASSETS_DIR / "east_africa_admin1.geojson" # Fallback
-ISO_CSV = ASSETS_DIR / "country_iso.csv"                  # Optional: ADM0_NAME→ISO3
+WORLD_GJ = ASSETS_DIR / "world_admin0.geojson"           
+EA_ADMIN1_GJ = ASSETS_DIR / "east_africa_admin1.geojson" 
+ISO_CSV = ASSETS_DIR / "country_iso.csv"                  
 
-# -----------------------------
-# Page config & minimal styles
-# -----------------------------
+
 st.set_page_config(
     page_title="Global Drought Risk Explorer",
     page_icon="🌍",
     layout="wide",
 )
 
-# Simple CSS for Tableau-like cards
 st.markdown(
     """
     <style>
@@ -65,9 +58,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# -----------------------------
-# Utils
-# -----------------------------
+
 @st.cache_data(show_spinner=False)
 def _load_core() -> pd.DataFrame:
     """Load indicators from Parquet or build from CSVs (tiny)."""
@@ -104,7 +95,6 @@ def _load_core() -> pd.DataFrame:
         df["risk_index"] = df[["ndvi_stress","rain_deficit","soil_dryness"]].mean(axis=1, skipna=True)
         df["risk_index_sm3"] = (df.groupby(["ADM0_NAME","ADM1_NAME"])["risk_index"]
                                   .transform(lambda s: s.rolling(3, min_periods=1).mean()))
-        # Persist for faster boots next time
         try:
             df.to_parquet(PARQUET, index=False)
         except Exception:
@@ -116,7 +106,6 @@ def _load_core() -> pd.DataFrame:
         )
         st.stop()
 
-    # Human-friendly labels
     df = df.rename(columns={"ADM0_NAME":"Country","ADM1_NAME":"Area"})
     df = df.sort_values(["Country","Area","date"]).reset_index(drop=True)
     return df
@@ -164,8 +153,7 @@ def category(val: float) -> str:
     return "Extreme"
 
 def blue_green_yellow_orange_red_classes():
-    # 7-class, color-blind considerate ramp (hex → rgba in deck.gl)
-    # blue → teal → green → yellow → orange → red
+  
     return [
         [33, 102, 172, 200],   # deep blue
         [67, 147, 195, 200],   # blue
@@ -182,20 +170,16 @@ def quantile_bins(values: pd.Series, k=7):
         return []
     qs = np.linspace(0, 1, k+1)
     edges = np.quantile(vals, qs)
-    # ensure monotonic edges (in case of many ties)
     edges = np.unique(edges)
     return edges
 
-# -----------------------------
-# Load data
-# -----------------------------
+
 with st.spinner("Loading data…"):
     df = _load_core()
     # Build 0–100 scale
     df["DRI_0_100"] = to_0_100(df, "risk_index_sm3")
     last_date = pd.to_datetime(df["date"].max())
 
-    # ISO mapping (optional)
     iso_map = _load_iso_map()
     if not iso_map.empty:
         df = df.merge(iso_map.rename(columns={"ADM0_NAME":"Country"}), on="Country", how="left")
@@ -203,9 +187,7 @@ with st.spinner("Loading data…"):
         df["ISO3"] = None
         df["Continent"] = None
 
-    # Latest snapshot by Area
     latest = df[df["date"] == last_date].copy()
-    # Compute deltas
     prev_date = df["date"].sort_values().unique()[-2] if df["date"].nunique() > 1 else last_date
     prev = df[df["date"] == prev_date][["Country","Area","DRI_0_100"]].rename(columns={"DRI_0_100":"DRI_prev"})
     latest = latest.merge(prev, on=["Country","Area"], how="left")
@@ -217,9 +199,7 @@ with st.spinner("Loading data…"):
     latest["YoY"] = latest["DRI_0_100"] - latest["DRI_yoy_base"]
     latest["Category"] = latest["DRI_0_100"].apply(category)
 
-# -----------------------------
-# HEADER
-# -----------------------------
+
 col1, col2 = st.columns([0.72, 0.28])
 with col1:
     st.markdown("### **Global Drought Risk Explorer**")
@@ -237,10 +217,7 @@ with col2:
         "[![SMAP](https://img.shields.io/badge/SMAP-soil-6a4c93?style=flat-square)](#)"
     )
 
-# -----------------------------
-# URL state (shareable)
-# -----------------------------
-qp = st.query_params  # Streamlit ≥1.30
+qp = st.query_params 
 def set_query_params(country=None, metric=None, date=None, search=None):
     params = {}
     if country: params["country"] = country
@@ -250,9 +227,7 @@ def set_query_params(country=None, metric=None, date=None, search=None):
     st.query_params.clear()
     st.query_params.update(params)
 
-# -----------------------------
-# FILTERS (left rail)
-# -----------------------------
+
 st.sidebar.header("Filters")
 countries = sorted(latest["Country"].dropna().unique().tolist())
 country_sel = st.sidebar.multiselect("Countries", countries, default=countries)
@@ -264,7 +239,6 @@ metric_sel = st.sidebar.selectbox(
     help="DRI_0_100 is the 0–100 scaled index (higher=worse). Others are standardized components."
 )
 
-# Sync to URL
 set_query_params(
     country=",".join(country_sel) if country_sel else None,
     metric=metric_sel,
@@ -272,7 +246,6 @@ set_query_params(
     search=search_q or None
 )
 
-# Apply country & search filters to latest snapshot and time series
 mask = latest["Country"].isin(country_sel) if country_sel else slice(None)
 snap = latest.loc[mask].copy()
 if search_q:
@@ -280,9 +253,8 @@ if search_q:
     snap = snap[snap["Area"].str.lower().str.contains(s) | snap["Country"].str.lower().str.contains(s)]
 
 dfc = df[df["Country"].isin(country_sel)] if country_sel else df
-# -----------------------------
-# KPIs
-# -----------------------------
+
+
 def kpi(col, title, value, sub=None):
     with col:
         st.markdown(f'<div class="kpi-card"><div class="kpi-title">{title}</div>'
@@ -299,15 +271,11 @@ kpi(k2, "% Area High Risk (≥70)", f"{pct_high:.1f}%" if np.isfinite(pct_high) 
 kpi(k3, "Countries Monitored", f"{countries_count}")
 kpi(k4, "30-day Change", f"{mom:+.1f}" if np.isfinite(mom) else "—")
 
-# -----------------------------
-# TABS (Map | Trends | Table)
-# -----------------------------
+
 st.markdown('<div class="tabbar"></div>', unsafe_allow_html=True)
 tab_map, tab_trend, tab_table = st.tabs(["🗺️ Map", "📈 Trends", "📋 Table"])
 
-# -----------------------------
-# MAP TAB
-# -----------------------------
+
 with tab_map:
     st.markdown("#### Choropleth")
     # Try geometries
@@ -315,10 +283,7 @@ with tab_map:
     if gj is None:
         st.info("No geometry found. Add `assets/world_admin0.geojson` (with ISO-3) or `assets/east_africa_admin1.geojson`.")
     else:
-        # Prepare a lookup for latest metric
-        # If world geojson with ISO: aggregate to country level
         if level == "world":
-            # Use ISO if available
             if dfc["ISO3"].notna().any():
                 agg = (dfc[dfc["date"]==last_date]
                         .groupby(["Country","ISO3"])[metric_sel]
@@ -331,11 +296,9 @@ with tab_map:
                         .reset_index())
                 agg["ISO3"] = None
             val_map = {r["ISO3"]:(r["Country"], float(r[metric_sel])) for _,r in agg.iterrows()}
-            # Quantile classes for legend
             bins = quantile_bins(agg[metric_sel], k=7)
             palette = blue_green_yellow_orange_red_classes()
 
-            # Attach values to geojson properties
             feats = gj.get("features", [])
             for f in feats:
                 props = f.get("properties", {})
@@ -345,18 +308,16 @@ with tab_map:
                     country, val = val_map[key_iso]
                 props["Country"] = country or props.get("NAME","")
                 props["DRI_value"] = val
-                # class color
+
                 if val is None or (len(bins)==0):
                     props["fill_rgba"] = [200,200,200,120]
                     props["class_label"] = "No data"
                 else:
-                    # find bin index
                     idx = int(np.digitize([val], bins, right=False)[0] - 1)
                     idx = max(0, min(idx, len(palette)-1))
                     props["fill_rgba"] = palette[idx]
                     props["class_label"] = f"{bins[idx]:.1f}–{bins[min(idx+1,len(bins)-1)]:.1f}"
         else:
-            # EA admin1 fallback: join on Country+Area
             snap_map = { (r["Country"], r["Area"]): float(r[metric_sel]) if pd.notna(r[metric_sel]) else None
                          for _, r in snap.iterrows() }
             feats = gj.get("features", [])
@@ -384,7 +345,6 @@ with tab_map:
                     p["fill_rgba"] = palette[idx]
                     p["class_label"] = f"{bins[idx]:.1f}–{bins[min(idx+1,len(bins)-1)]:.1f}"
 
-        # Deck layer
         layer = pdk.Layer(
             "GeoJsonLayer",
             gj,
@@ -399,21 +359,18 @@ with tab_map:
         st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, map_style=None))
         st.caption("Legend: 0, 20, 40, 60, 80, 100 — higher = worse. Quantile-binned colors; gray = no data.")
 
-# -----------------------------
-# TRENDS TAB
-# -----------------------------
+
+
 with tab_trend:
     st.markdown("#### Portfolio Risk Over Time")
     toggle = st.segmented_control("Series", options=["Mean","P90","Assets-weighted"], default="Mean")
     ma3 = st.checkbox("3-month moving average", value=True)
-    # Aggregate series
     grp = dfc.groupby("date")["DRI_0_100"]
     if toggle == "Mean":
         ts = grp.mean().reset_index(name="DRI")
     elif toggle == "P90":
         ts = grp.quantile(0.9).reset_index(name="DRI")
     else:
-        # If no asset weights column, fall back to mean
         if "asset_weight" in dfc.columns:
             w = (dfc.dropna(subset=["asset_weight","DRI_0_100"])
                    .groupby("date")
@@ -438,9 +395,6 @@ with tab_trend:
     st.altair_chart(base, use_container_width=True)
     st.caption("Tip: This is the average (or hotspot P90) risk over your current selection.")
 
-# -----------------------------
-# TABLE TAB
-# -----------------------------
 with tab_table:
     st.markdown("#### Areas — Latest View")
     table = snap[["Country","Area","DRI_0_100","MoM","YoY","Category"]].copy()
@@ -457,16 +411,12 @@ with tab_table:
     csv_bytes = table.to_csv(index=False).encode("utf-8")
     st.download_button("Download CSV", data=csv_bytes, file_name="drought_risk_latest.csv", mime="text/csv")
 
-# -----------------------------
-# SHARE / ABOUT
-# -----------------------------
+
 st.divider()
 c1, c2 = st.columns([0.6, 0.4])
 with c1:
-    # Share link with current filters
     params = st.query_params
     base_url = st.request.url if hasattr(st, "request") else ""
-    # Reconstruct share URL (fallback to page url if not accessible)
     share_url = base_url.split("?")[0] + "?" + urllib.parse.urlencode(params, doseq=True) if base_url else ""
     st.markdown("##### Share")
     st.text_input("Copy link with current filters", share_url, label_visibility="collapsed")

@@ -1,5 +1,4 @@
-# Tracking drought risk across East Africa
-
+# Global Drought Risk Explorer
 ## Live Demo
 [Open the dashboard on Streamlit »](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/)
 

@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from src.config import DATA_DIR, START, END
+from src.modelling.risk_index import compute_risk_index, INDICATOR_COLUMNS
 
 GEE_DIR = DATA_DIR / "gee_monthly"
 NDVI_CSV   = GEE_DIR / "EA_admin1_monthly_NDVI.csv"

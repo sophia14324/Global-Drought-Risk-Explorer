@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "global-drought-risk-explorer"
+version = "0.1.0"
+description = "A Streamlit app for exploring drought risk using CHIRPS, MODIS NDVI and SMAP data."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "Project Contributors", email = "contact@example.com" }]
+license = { text = "MIT" }
+dependencies = [
+    "pandas>=1.5,<2.0",
+    "numpy>=1.20,<2.0",
+    "streamlit>=1.18,<2.0",
+    "pyyaml>=6.0,<7.0",
+    "scikit-learn>=1.2,<2.0",
+    "hdbscan>=0.8,<1.0",
+    "scipy>=1.7,<2.0",
+]
+
+[project.scripts]
+gdre-build-indicators = "src.scripts.build_indicators:main"
+# Launch the dashboard via: streamlit run src/dashboard/app.py
+
+[tool.setuptools.packages.find]
+# Include src-prefixed packages so that modules under `src` (e.g. src.config,
+# src.data) are installed and importable. Also include the internal package.
+include = ["src*", "global_drought_risk_explorer*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]

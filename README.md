@@ -1,6 +1,6 @@
 # Global Drought Risk Explorer
 ## Live Demo
-[Open the dashboard on Streamlit »](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/)
+[Open the dashboard on Streamlit »](https://sophia14324-tracking-drought-risk-across-srcdashboardapp-navgit.streamlit.app/?metric=DRI_0_100&date=2025-05)
 
 <!-- Optional: add a screenshot to assets/readme_preview.png -->
 <!-- ![Dashboard preview](assets/readme_preview.png) -->

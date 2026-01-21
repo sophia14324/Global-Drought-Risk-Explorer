@@ -1,8 +1,11 @@
-from __future__ import annotations
+import sys
+from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parent))
+
+from __future__ import annotations
 import json
 import urllib.parse
-from pathlib import Path
 
 import numpy as np
 import pandas as pd

@@ -7,7 +7,7 @@ name = "global-drought-risk-explorer"
 version = "0.1.0"
 description = "A Streamlit app for exploring drought risk using CHIRPS, MODIS NDVI and SMAP data."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.11"
 authors = [{ name = "Project Contributors", email = "contact@example.com" }]
 license = { text = "MIT" }
 dependencies = [
